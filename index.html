@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kaidee Seafood — Social Dashboard</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--muted:#94a3b8;--text:#e2e8f0;--accent:#38bdf8;--line:#334155;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);padding:24px;}
+h1{margin:0 0 4px;font-size:22px;}
+.sub{color:var(--muted);font-size:13px;margin-bottom:20px;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+.card .label{color:var(--muted);font-size:12px;}
+.card .value{font-size:24px;font-weight:700;margin-top:4px;}
+.section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:24px;}
+.section h2{font-size:15px;margin:0 0 12px;}
+.bar-row{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:12px;}
+.bar-label{width:240px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-track{flex:1;background:#0b1220;border-radius:6px;overflow:hidden;height:18px;}
+.bar-fill{height:100%;background:linear-gradient(90deg,#38bdf8,#22c55e);min-width:2px;}
+.bar-val{width:54px;text-align:right;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;}
+th{color:var(--muted);font-weight:600;font-size:12px;}
+td.num,th.num{text-align:right;}
+.thumb{width:54px;height:54px;object-fit:cover;border-radius:8px;background:#0b1220;display:block;}
+.cap{max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;}
+.b-published{background:rgba(34,197,94,.15);color:#4ade80;}
+.b-scheduled{background:rgba(59,130,246,.15);color:#60a5fa;}
+.b-inprogress{background:rgba(245,158,11,.15);color:#fbbf24;}
+.b-failed{background:rgba(239,68,68,.15);color:#f87171;}
+a{color:var(--accent);text-decoration:none;}
+.pending{color:#64748b;}
+.empty{color:var(--muted);text-align:center;padding:40px;}
+.note{font-size:12px;color:var(--muted);margin-top:8px;}
+</style>
+</head>
+<body>
+<h1>🦐 Kaidee Seafood — Social Dashboard</h1>
+<div class="sub">อัปเดตล่าสุด: <b id="gen"></b> · เพจ: <a id="pagelink" target="_blank">Facebook ↗</a> · เอ็นเกจเมนต์ดึงจาก Blotato Analytics</div>
+<div class="cards" id="cards"></div>
+<div class="section"><h2>📊 เอ็นเกจเมนต์รายโพสต์ (ไลก์ + คอมเมนต์ + แชร์)</h2><div id="chart"></div></div>
+<div class="section"><h2>🗂️ ประวัติการโพสต์</h2><div id="tablewrap"></div>
+<div class="note">หมายเหตุ: เอ็นเกจเมนต์ที่ขึ้น “—” คือ Blotato ยังไม่ได้ดึงข้อมูลมา (จะเติมเองภายหลัง) — รัน <b>.\dashboard.ps1</b> ซ้ำเพื่อรีเฟรช</div></div>
+<script>
+const DATA = [{"postSubmissionId":"54a01399-5cb6-47c8-bd00-ce570b5e5335","publishedPostId":"1969806886657640_1031804906185489","platform":"facebook","accountId":"30642","pageId":"1969806886657640","status":"published","caption":"#ขายส่งท้องปลาแซลมอน\n👉ท้องปลาแซลมอนเกรดพรีเมียม สายพันธุ์นอร์เวย์ สีสวย สด\nบรรจุในแพ็คสุญญากาศ เพื่อล็อกความสดใหม่ และจัดเก็บได้ยาวนาน\n🔥ขายต่อกำไรดี แปรรูป เมนูปิ้ง ย่าง ร้านอาหาร ห้ามพลาด\n\nบรรจุกล่องละ 10 แพ็ค /แพ็คละ 1 กก.\n\nสนใจติดต่อ 062-329-3646","captionFirstLine":"#ขายส่งท้องปลาแซลมอน","images":["392907.jpg"],"mediaUrls":["https://database.blotato.io/storage/v1/object/public/public_media/3dc9d9f2-c7f6-4126-a534-2917b1353eaf/48f78db0-46e7-4668-a058-bc7fc0e63f8e.jpg"],"publicUrl":"https://facebook.com/1969806886657640_1031804906185489","scheduledTime":null,"postedAt":"2026-06-04T11:58:00+07:00","engagement":null}];
+const GENERATED = "2026-06-04 12:44";
+const PAGE = "https://facebook.com/1969806886657640";
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+const n = v => (v===null||v===undefined||isNaN(v))?0:Number(v);
+const eng = p => p.engagement||{};
+const totEng = p => n(eng(p).likesCount)+n(eng(p).commentsCount)+n(eng(p).sharesCount);
+document.getElementById('gen').textContent = GENERATED;
+const pl = document.getElementById('pagelink'); pl.href = PAGE || '#';
+const posts = (DATA||[]).slice().sort((a,b)=>(b.postedAt||'').localeCompare(a.postedAt||''));
+let sLikes=0,sCom=0,sShare=0,sReach=0,sImp=0,sViews=0,pub=0,sched=0;
+posts.forEach(p=>{const e=eng(p);sLikes+=n(e.likesCount);sCom+=n(e.commentsCount);sShare+=n(e.sharesCount);sReach+=n(e.reachCount);sImp+=n(e.impressionsCount);sViews+=n(e.viewsCount);if(p.status==='published')pub++;else if(p.status==='scheduled')sched++;});
+const cards=[['โพสต์ทั้งหมด',posts.length],['เผยแพร่แล้ว',pub],['ตั้งเวลา/รอ',sched],['👍 ไลก์รวม',sLikes],['💬 คอมเมนต์รวม',sCom],['🔁 แชร์รวม',sShare],['👁️ Reach รวม',sReach],['📊 Impressions รวม',sImp]];
+document.getElementById('cards').innerHTML = cards.map(c=>`<div class="card"><div class="label">${c[0]}</div><div class="value">${c[1].toLocaleString()}</div></div>`).join('');
+const maxE = Math.max(1,...posts.map(totEng));
+document.getElementById('chart').innerHTML = posts.length ? posts.map(p=>{const t=totEng(p);const lab=(p.captionFirstLine||p.caption||'(ไม่มีแคปชั่น)').slice(0,42);const d=(p.postedAt||'').slice(0,10);return `<div class="bar-row"><div class="bar-label" title="${escapeHtml(p.caption||'')}">${d} · ${escapeHtml(lab)}</div><div class="bar-track"><div class="bar-fill" style="width:${(t/maxE*100).toFixed(1)}%"></div></div><div class="bar-val">${t.toLocaleString()}</div></div>`;}).join('') : '<div class="empty">ยังไม่มีข้อมูล</div>';
+const badge = s=>({published:['b-published','เผยแพร่แล้ว'],scheduled:['b-scheduled','ตั้งเวลา'],'in-progress':['b-inprogress','กำลังโพสต์'],failed:['b-failed','ล้มเหลว']}[s]||['b-inprogress',s||'-']);
+const cell = v => (v===null||v===undefined)?'<span class="pending">—</span>':Number(v).toLocaleString();
+const rows = posts.map(p=>{const e=eng(p);const b=badge(p.status);const thumb=(p.mediaUrls&&p.mediaUrls[0])?`<img class="thumb" src="${p.mediaUrls[0]}" loading="lazy">`:'<div class="thumb"></div>';const link=p.publicUrl?`<a href="${p.publicUrl}" target="_blank">เปิด ↗</a>`:'<span class="pending">—</span>';return `<tr><td>${thumb}</td><td>${(p.postedAt||'').replace('T',' ').slice(0,16)}</td><td class="cap" title="${escapeHtml(p.caption||'')}">${escapeHtml((p.captionFirstLine||p.caption||'').slice(0,60))}</td><td><span class="badge ${b[0]}">${b[1]}</span></td><td class="num">${cell(e.likesCount)}</td><td class="num">${cell(e.commentsCount)}</td><td class="num">${cell(e.sharesCount)}</td><td class="num">${cell(e.reachCount)}</td><td class="num">${cell(e.viewsCount)}</td><td>${link}</td></tr>`;}).join('');
+document.getElementById('tablewrap').innerHTML = posts.length ? `<table><thead><tr><th>รูป</th><th>วันเวลา</th><th>แคปชั่น</th><th>สถานะ</th><th class="num">👍</th><th class="num">💬</th><th class="num">🔁</th><th class="num">Reach</th><th class="num">Views</th><th>ลิงก์</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty">ยังไม่มีโพสต์ — โพสต์ด้วย .\\post-fb.ps1 แล้วรันสคริปต์นี้อีกครั้ง</div>';
+</script>
+</body>
+</html>
